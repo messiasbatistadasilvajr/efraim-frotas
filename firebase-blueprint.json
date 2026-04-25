@@ -1,0 +1,164 @@
+{
+  "entities": {
+    "Vehicle": {
+      "title": "Vehicle",
+      "description": "Information about a fleet vehicle.",
+      "type": "object",
+      "properties": {
+        "plate": { "type": "string" },
+        "model": { "type": "string" },
+        "year": { "type": "number" },
+        "color": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "rented", "maintenance", "inactive"] },
+        "currentKm": { "type": "number" },
+        "insuranceExpiry": { "type": "string", "format": "date" },
+        "licensingExpiry": { "type": "string", "format": "date" },
+        "purchaseValue": { "type": "number" },
+        "ownerId": { "type": "string" },
+        "documents": { 
+          "type": "object",
+          "properties": {
+            "crlvUrl": { "type": "string" },
+            "insurancePolicyUrl": { "type": "string" }
+          }
+        }
+      },
+      "required": ["plate", "model", "year", "status", "currentKm", "ownerId"]
+    },
+    "Driver": {
+      "title": "Driver",
+      "description": "Information about a driver.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "cnh": { "type": "string" },
+        "cnhExpiry": { "type": "string", "format": "date" },
+        "cpf": { "type": "string" },
+        "contact": { "type": "string" },
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "blocked", "inactive"] },
+        "ownerId": { "type": "string" },
+        "depositBalance": { "type": "number" },
+        "documents": {
+          "type": "object",
+          "properties": {
+            "cnhUrl": { "type": "string" },
+            "residenceProofUrl": { "type": "string" }
+          }
+        }
+      },
+      "required": ["name", "cnh", "cnhExpiry", "cpf", "ownerId"]
+    },
+    "Contract": {
+      "title": "Contract",
+      "description": "A rental contract between a driver and a vehicle.",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string" },
+        "vehicleId": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "closed", "cancelled"] },
+        "pricePerWeek": { "type": "number" },
+        "securityDeposit": { "type": "number" },
+        "initialKm": { "type": "number" },
+        "finalKm": { "type": "number" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["driverId", "vehicleId", "startDate", "status", "pricePerWeek", "ownerId"]
+    },
+    "Maintenance": {
+      "title": "Maintenance",
+      "description": "Maintenance record for a vehicle.",
+      "type": "object",
+      "properties": {
+        "vehicleId": { "type": "string" },
+        "type": { "type": "string", "enum": ["preventive", "corrective"] },
+        "date": { "type": "string", "format": "date" },
+        "km": { "type": "number" },
+        "cost": { "type": "number" },
+        "description": { "type": "string" },
+        "parts": { "type": "array", "items": { "type": "string" } },
+        "workshopName": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["vehicleId", "type", "date", "km", "cost", "ownerId"]
+    },
+    "Fine": {
+      "title": "Fine",
+      "description": "Traffic fine record.",
+      "type": "object",
+      "properties": {
+        "vehicleId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "paid", "contested", "reimbursed"] },
+        "infractionCode": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["vehicleId", "driverId", "date", "amount", "status", "ownerId"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Payment record from a driver.",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string" },
+        "contractId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["weekly", "deposit", "repair", "fine", "earnings"] },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["driverId", "date", "amount", "type", "ownerId"]
+    },
+    "Checklist": {
+      "title": "Checklist",
+      "description": "Vehicle condition checklist.",
+      "type": "object",
+      "properties": {
+        "contractId": { "type": "string" },
+        "type": { "type": "string", "enum": ["delivery", "return"] },
+        "date": { "type": "string", "format": "date-time" },
+        "km": { "type": "number" },
+        "items": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "itemName": { "type": "string" },
+              "status": { "type": "string", "enum": ["ok", "damage", "missing"] },
+              "note": { "type": "string" }
+            }
+          } 
+        },
+        "photos": { "type": "array", "items": { "type": "string" } },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["contractId", "type", "date", "km", "ownerId"]
+    },
+    "Manager": {
+      "title": "Manager",
+      "description": "Information about a manager with full access.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff"] }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/vehicles/{vehicleId}": { "schema": "Vehicle", "description": "Fleet vehicles" },
+    "/drivers/{driverId}": { "schema": "Driver", "description": "Registered drivers" },
+    "/contracts/{contractId}": { "schema": "Contract", "description": "Rental contracts" },
+    "/maintenances/{maintenanceId}": { "schema": "Maintenance", "description": "Maintenance history" },
+    "/fines/{fineId}": { "schema": "Fine", "description": "Traffic fines history" },
+    "/payments/{paymentId}": { "schema": "Payment", "description": "Financial records" },
+    "/checklists/{checklistId}": { "schema": "Checklist", "description": "Vehicle inspection reports" },
+    "/managers/{managerId}": { "schema": "Manager", "description": "Application managers" }
+  }
+}

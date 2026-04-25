@@ -1,0 +1,6 @@
+{
+  "name": "Efraim Frotas",
+  "description": "Comprehensive fleet management system for Uber partners, focusing on financial control, maintenance tracking, and driver performance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["firebase"]
+}

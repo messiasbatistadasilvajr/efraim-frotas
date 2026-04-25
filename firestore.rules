@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function isManager() {
+      return isSignedIn() && exists(/databases/$(database)/documents/managers/$(request.auth.uid));
+    }
+    function isOwner(data) {
+      return isSignedIn() && (data.ownerId == request.auth.uid || isManager());
+    }
+    function isTargetDriver(data) {
+      return isSignedIn() && data.email == request.auth.token.email;
+    }
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Managers
+    match /managers/{managerId} {
+      allow read, list: if isSignedIn() && (request.auth.uid == managerId || isManager() || resource.data.email == request.auth.token.email);
+      allow write: if isManager();
+    }
+
+    // Vehicles
+    match /vehicles/{vehicleId} {
+      allow read, list: if isOwner(resource.data);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    // Drivers
+    match /drivers/{driverId} {
+      allow read, list: if isOwner(resource.data) || isTargetDriver(resource.data);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    // Contracts
+    match /contracts/{contractId} {
+      // Simplified: allow read if owner or if linked driver
+      allow read, list: if isOwner(resource.data) || (isSignedIn() && exists(/databases/$(database)/documents/drivers/$(resource.data.driverId)) && get(/databases/$(database)/documents/drivers/$(resource.data.driverId)).data.email == request.auth.token.email);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    // Maintenances
+    match /maintenances/{maintenanceId} {
+      allow read, list: if isOwner(resource.data);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    // Fines
+    match /fines/{fineId} {
+      allow read, list: if isOwner(resource.data) || (isSignedIn() && exists(/databases/$(database)/documents/drivers/$(resource.data.driverId)) && get(/databases/$(database)/documents/drivers/$(resource.data.driverId)).data.email == request.auth.token.email);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow read, list: if isOwner(resource.data) || (isSignedIn() && exists(/databases/$(database)/documents/drivers/$(resource.data.driverId)) && get(/databases/$(database)/documents/drivers/$(resource.data.driverId)).data.email == request.auth.token.email);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
+
+    // Checklists
+    match /checklists/{checklistId} {
+      allow read, list: if isOwner(resource.data);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
+  }
+}
