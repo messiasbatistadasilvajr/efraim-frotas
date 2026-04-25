@@ -40,17 +40,6 @@ export function MaintenanceList() {
     setShowModal(true);
   };
 
-  const openAddMaintenance = (vehicleId?: string) => {
-    if (vehicleId) {
-      setFormData(prev => ({ ...prev, vehicleId }));
-    } else {
-      setFormData({
-        vehicleId: '', type: 'preventive' as Maintenance['type'], date: new Date().toISOString().split('T')[0], km: 0, cost: 0, description: '', workshopName: '', parts: [] as string[]
-      });
-    }
-    setShowModal(true);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser) return;

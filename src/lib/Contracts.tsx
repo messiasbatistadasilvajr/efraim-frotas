@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { Plus, Car, User, Calendar, CreditCard, CheckCircle2, XCircle, Search } from 'lucide-react';
-import { db, auth } from '../lib/firebase';
+import { db, auth } from './firebase';
 import { Contract, Vehicle, Driver } from '../types';
-import { cn, formatCurrency, formatDate } from '../lib/utils';
+import { cn, formatCurrency, formatDate } from './utils';
 
-import { ContractChecklist } from './ContractChecklist';
+import { ContractChecklist } from '../components/ContractChecklist';
 
 interface ContractsProps {
   initialDriverId?: string | null;

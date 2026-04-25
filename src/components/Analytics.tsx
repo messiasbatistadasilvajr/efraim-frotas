@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, BarChart2, Award, AlertCircle, PieChart, Activity, DollarSign, Car, Wrench, X, TrendingDown } from 'lucide-react';
+import { TrendingUp, BarChart2, Award, AlertCircle, PieChart, Activity, DollarSign, Car, Wrench, X, TrendingDown, Clock } from 'lucide-react';
 import { useFleetData } from '../hooks/useFleetData';
 import { FleetEngine } from '../lib/fleet-engine';
 import { formatCurrency, cn } from '../lib/utils';
@@ -11,6 +11,22 @@ import {
 export function Analytics() {
   const { vehicles, drivers, payments, maintenances, contracts, loading } = useFleetData();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [alertFilter, setAlertFilter] = useState<'all' | 'expired' | 'warning'>('all');
+  const [snoozedAlerts, setSnoozedAlerts] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('fleet_snoozed_alerts');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const snoozeAlert = (key: string) => {
+    const snoozeUntil = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+    const updated = { ...snoozedAlerts, [key]: snoozeUntil };
+    setSnoozedAlerts(updated);
+    localStorage.setItem('fleet_snoozed_alerts', JSON.stringify(updated));
+  };
 
   // ROI per Vehicle - Memoized
   const vehicleStats = useMemo(() => {
@@ -56,18 +72,46 @@ export function Analytics() {
 
   // Document Alerts Logic - Memoized
   const docAlerts = useMemo(() => {
-    return [
+    const now = Date.now();
+    const alerts = [
       ...vehicles.flatMap(v => {
         const insStatus = FleetEngine.getExpiryStatus(v.insuranceExpiry);
         const licStatus = FleetEngine.getExpiryStatus(v.licensingExpiry);
-        const alerts = [];
-        if (insStatus && insStatus !== 'ok') alerts.push({ target: v.model, detail: v.plate, doc: 'Seguro', date: v.insuranceExpiry, status: insStatus });
-        if (licStatus && licStatus !== 'ok') alerts.push({ target: v.model, detail: v.plate, doc: 'Licenciamento', date: v.licensingExpiry, status: licStatus });
-        return alerts;
+        const res = [];
+        if (insStatus && insStatus !== 'ok') {
+          res.push({ 
+            id: `v-${v.id}-ins`,
+            target: v.model, 
+            detail: v.plate, 
+            doc: 'Seguro', 
+            date: v.insuranceExpiry, 
+            status: insStatus 
+          });
+        }
+        if (licStatus && licStatus !== 'ok') {
+          res.push({ 
+            id: `v-${v.id}-lic`,
+            target: v.model, 
+            detail: v.plate, 
+            doc: 'Licenciamento', 
+            date: v.licensingExpiry, 
+            status: licStatus 
+          });
+        }
+        return res;
       }),
       ...drivers.flatMap(d => {
         const cnhStatus = FleetEngine.getExpiryStatus(d.cnhExpiry);
-        if (cnhStatus && cnhStatus !== 'ok') return [{ target: d.name, detail: 'Motorista', doc: 'CNH', date: d.cnhExpiry, status: cnhStatus }];
+        if (cnhStatus && cnhStatus !== 'ok') {
+          return [{ 
+            id: `d-${d.id}-cnh`,
+            target: d.name, 
+            detail: 'Motorista', 
+            doc: 'CNH', 
+            date: d.cnhExpiry, 
+            status: cnhStatus 
+          }];
+        }
         return [];
       }),
       ...contracts.filter(c => c.status === 'active' && c.endDate).flatMap(c => {
@@ -76,6 +120,7 @@ export function Analytics() {
           const driver = drivers.find(d => d.id === c.driverId);
           const vehicle = vehicles.find(v => v.id === c.vehicleId);
           return [{ 
+            id: `c-${c.id}-end`,
             target: driver?.name || 'Motorista', 
             detail: vehicle?.plate || 'Contrato', 
             doc: 'Contrato', 
@@ -85,8 +130,19 @@ export function Analytics() {
         }
         return [];
       })
-    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [vehicles, drivers, contracts]);
+    ];
+
+    return alerts
+      .filter(alert => {
+        // Only skip if warning and snoozed
+        if (alert.status === 'warning') {
+          const snoozedUntil = snoozedAlerts[alert.id];
+          if (snoozedUntil && now < snoozedUntil) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [vehicles, drivers, contracts, snoozedAlerts]);
 
   const expiredAlerts = useMemo(() => docAlerts.filter(a => a.status === 'expired'), [docAlerts]);
   const warningAlerts = useMemo(() => docAlerts.filter(a => a.status === 'warning'), [docAlerts]);
@@ -162,70 +218,117 @@ export function Analytics() {
       {/* Document Alerts Card */}
       {docAlerts.length > 0 && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[18px] font-bold flex items-center gap-2">
-              <AlertCircle size={20} className="text-warning" />
-              Monitoramento de Vencimentos
-            </h3>
-            <span className="text-[11px] font-bold uppercase tracking-widest text-subtle">
-              Total de {docAlerts.length} pendências
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+            <div className="flex items-center gap-2">
+               <div className="p-2 bg-warning/10 rounded-lg">
+                 <AlertCircle size={20} className="text-warning" />
+               </div>
+               <div>
+                  <h3 className="text-[18px] font-bold">Monitoramento de Vencimentos</h3>
+                  <p className="text-[12px] text-subtle">Acompanhe documentos e contratos próximos do fim</p>
+               </div>
+            </div>
+            
+            <div className="flex bg-bg rounded-lg p-1 border border-line shadow-sm self-start sm:self-center">
+              <button 
+                onClick={() => setAlertFilter('all')}
+                className={cn(
+                  "px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest rounded-md transition-all",
+                  alertFilter === 'all' ? "bg-accent text-white shadow-md shadow-accent/20" : "text-subtle hover:text-ink"
+                )}
+              >Todos</button>
+              <button 
+                onClick={() => setAlertFilter('expired')}
+                className={cn(
+                  "px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest rounded-md transition-all",
+                  alertFilter === 'expired' ? "bg-danger text-white shadow-md shadow-danger/20" : "text-subtle hover:text-ink"
+                )}
+              >Vencidos</button>
+              <button 
+                onClick={() => setAlertFilter('warning')}
+                className={cn(
+                  "px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest rounded-md transition-all",
+                  alertFilter === 'warning' ? "bg-warning text-white shadow-md shadow-warning/20" : "text-subtle hover:text-ink"
+                )}
+              >A Vencer</button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Expired Alerts */}
-            <div className="panel p-5 border-l-4 border-l-danger bg-danger/5">
-              <h4 className="text-[14px] font-bold text-danger uppercase tracking-widest mb-4 flex items-center gap-2">
-                Documentos Vencidos ({expiredAlerts.length})
-              </h4>
-              <div className="space-y-3">
-                {expiredAlerts.length === 0 ? (
-                  <p className="text-[12px] text-subtle italic py-4">Nenhum documento vencido.</p>
-                ) : (
-                  expiredAlerts.map((alert, i) => (
-                    <div key={i} className="flex flex-col p-3 bg-surface border border-danger/20 rounded-[8px] shadow-sm">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-danger/10 text-danger rounded">
-                          {alert.doc}
-                        </span>
-                        <span className="text-[11px] font-bold font-mono text-danger">
-                          Vencido em {new Date(alert.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <h5 className="text-[14px] font-bold leading-tight">{alert.target}</h5>
-                      <p className="text-[11px] text-subtle uppercase tracking-widest">{alert.detail}</p>
+            {(alertFilter === 'all' || alertFilter === 'expired') && (
+              <div className="panel p-5 border-l-4 border-l-danger bg-danger/[0.02]">
+                <h4 className="text-[14px] font-bold text-danger uppercase tracking-widest mb-4 flex items-center gap-2">
+                  Documentos Vencidos ({expiredAlerts.length})
+                </h4>
+                <div className="space-y-3">
+                  {expiredAlerts.length === 0 ? (
+                    <div className="text-center py-8">
+                       <p className="text-[12px] text-subtle italic">Nenhum documento vencido.</p>
                     </div>
-                  ))
-                )}
+                  ) : (
+                    expiredAlerts.map((alert, i) => (
+                      <div key={i} className="flex flex-col p-4 bg-surface border border-danger/20 rounded-[12px] shadow-sm hover:shadow-md transition-all">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-danger/10 text-danger rounded">
+                            {alert.doc}
+                          </span>
+                          <span className="text-[11px] font-bold font-mono text-danger">
+                            Vencido em {new Date(alert.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h5 className="text-[14px] font-bold leading-tight">{alert.target}</h5>
+                        <p className="text-[11px] text-subtle uppercase tracking-widest">{alert.detail}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Warning Alerts */}
-            <div className="panel p-5 border-l-4 border-l-warning bg-warning/5">
-              <h4 className="text-[14px] font-bold text-warning uppercase tracking-widest mb-4 flex items-center gap-2">
-                A Vencer (Próximos 30 dias) ({warningAlerts.length})
-              </h4>
-              <div className="space-y-3">
-                {warningAlerts.length === 0 ? (
-                  <p className="text-[12px] text-subtle italic py-4">Nenhum vencimento próximo.</p>
-                ) : (
-                  warningAlerts.map((alert, i) => (
-                    <div key={i} className="flex flex-col p-3 bg-surface border border-warning/20 rounded-[8px] shadow-sm">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-warning/10 text-warning rounded">
-                          {alert.doc}
-                        </span>
-                        <span className="text-[11px] font-bold font-mono text-warning">
-                          Vence em {new Date(alert.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <h5 className="text-[14px] font-bold leading-tight">{alert.target}</h5>
-                      <p className="text-[11px] text-subtle uppercase tracking-widest">{alert.detail}</p>
+            {(alertFilter === 'all' || alertFilter === 'warning') && (
+              <div className="panel p-5 border-l-4 border-l-warning bg-warning/[0.02]">
+                <h4 className="text-[14px] font-bold text-warning uppercase tracking-widest mb-4 flex items-center gap-2">
+                  A Vencer (Próximos 30 dias) ({warningAlerts.length})
+                </h4>
+                <div className="space-y-3">
+                  {warningAlerts.length === 0 ? (
+                    <div className="text-center py-8">
+                       <p className="text-[12px] text-subtle italic">Nenhum vencimento próximo.</p>
                     </div>
-                  ))
-                )}
+                  ) : (
+                    warningAlerts.map((alert, i) => (
+                      <div key={i} className="flex flex-col p-4 bg-surface border border-warning/20 rounded-[12px] shadow-sm hover:shadow-md transition-all group">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-warning/10 text-warning rounded">
+                            {alert.doc}
+                          </span>
+                          <span className="text-[11px] font-bold font-mono text-warning">
+                            Vence em {new Date(alert.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-end">
+                           <div>
+                              <h5 className="text-[14px] font-bold leading-tight">{alert.target}</h5>
+                              <p className="text-[11px] text-subtle uppercase tracking-widest">{alert.detail}</p>
+                           </div>
+                           <button 
+                             onClick={() => snoozeAlert(alert.id)}
+                             title="Adiar por 7 dias"
+                             className="p-2 text-subtle hover:text-accent hover:bg-accent/5 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                           >
+                             <div className="flex items-center gap-1.5 text-[11px] font-bold">
+                               <Clock size={14} /> Snooze
+                             </div>
+                           </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

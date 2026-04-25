@@ -28,7 +28,7 @@ import { cn } from './lib/utils';
 import { Dashboard } from './components/Dashboard';
 import { Fleet } from './components/Fleet';
 import { Drivers } from './components/Drivers';
-import { Contracts } from './components/Contracts';
+import { Contracts } from './lib/Contracts';
 import { Finances } from './components/Finances';
 import { MaintenanceList } from './components/Maintenance';
 import { Tracking } from './components/Tracking';

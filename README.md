@@ -1,20 +1,49 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Efraim Frotas - Gestão de Frotas para Parceiros Uber
 
-# Run and deploy your AI Studio app
+Sistema profissional de gestão de frotas, focado em alta lucratividade, segurança e performance para proprietários de veículos em plataformas de transporte.
 
-This contains everything you need to run your app locally.
+## 🚀 Como Rodar o Projeto Localmente
 
-View your app in AI Studio: https://ai.studio/apps/03d57aec-015b-402c-b282-8f57ea2c2d01
+Siga os passos abaixo para configurar o ambiente de desenvolvimento em sua máquina:
 
-## Run Locally
+1. **Instalar Dependências**
+   ```bash
+   npm install
+   ```
 
-**Prerequisites:**  Node.js
+2. **Configurar Variáveis de Ambiente**
+   Crie um arquivo `.env.local` na raiz do projeto e adicione sua chave de API do Gemini (necessária para funcionalidades de IA se implementadas):
+   ```env
+   VITE_GEMINI_API_KEY=sua_chave_aqui
+   ```
+   *Nota: O projeto utiliza Firebase para banco de dados e autenticação. Certifique-se de configurar o Firebase no arquivo `src/lib/firebase.ts` ou utilizar o arquivo de configuração exportado.*
 
+3. **Rodar o App**
+   ```bash
+   npm run dev
+   ```
+   O servidor iniciará em `http://localhost:3000`.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🛠️ Tecnologias Utilizadas
+
+- **React 19** + **Vite 6**
+- **TypeScript**
+- **Tailwind CSS 4**
+- **Motion** (para animações suaves)
+- **Lucide React** (iconografia)
+- **Firebase** (Firestore & Auth)
+- **Recharts** (dashboards e análises)
+- **Google Gemini SDK** (preparado para IA)
+
+## 📋 Funcionalidades Principais
+
+- **Monitoramento em Tempo Real**: Dashboard dinâmico com métricas de ROI.
+- **Gestão de Frota**: Cadastro e acompanhamento de veículos com histórico de despesas.
+- **Gestão de Motoristas**: Controle de motoristas, CNH e rankings de performance.
+- **Contratos e Financeiro**: Gestão de locações, caução e pagamentos.
+- **Alertas Inteligentes**: Monitoramento de vencimentos de documentos (Seguro, CNH, Licenciamento) com sistema de 'Snooze'.
+- **Manutenção Proativa**: Alertas baseados em quilometragem e histórico de serviços.
+- **Checklists Digitais**: Vistorias de entrega e devolução integradas aos contratos.
+
+---
+Desenvolvido para máxima eficiência na gestão de frotas.
