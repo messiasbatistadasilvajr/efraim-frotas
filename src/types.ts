@@ -96,3 +96,86 @@ export interface Checklist {
   photos?: string[];
   ownerId: string;
 }
+
+export interface Issue {
+  id: string;
+  vehicleId?: string;
+  driverId?: string;
+  title: string;
+  description: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  date: string;
+  ownerId: string;
+  parentId?: string; // For sub-issues
+}
+
+export interface CommercialProposal {
+  id: string;
+  proposalNumber: string;
+  clientName: string;
+  clientCpfCnpj: string;
+  clientEmail: string;
+  clientPhone: string;
+  vehicleCategory: string; // 'Econômico', 'Sedan Conforto', 'Premium Black'
+  weeklyRate: number;
+  securityDeposit: number;
+  minimumPeriodWeeks: number;
+  kmAllowancePerWeek: number;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  createdAt: string;
+  validUntil: string;
+  notes?: string;
+  signedAt?: string;
+  signedIp?: string;
+  ownerId: string;
+}
+
+export interface OperationalTask {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  columnId: 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  vehicleId?: string;
+  vehiclePlate?: string;
+  driverName?: string;
+  assignee: string;
+  category: 'manutencao' | 'sinistro' | 'documentacao' | 'vistoria' | 'limpeza' | 'financeiro';
+  dueDate?: string;
+  estimatedCost?: number;
+  tags: string[];
+  subtasks: { id: string; title: string; completed: boolean }[];
+  createdAt: string;
+  ownerId: string;
+}
+
+export interface InvestorAccount {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  cpfCnpj: string;
+  vehiclesCount: number;
+  totalInvested: number;
+  managementFeePercent: number; // e.g., 10% ou 15%
+  bankInfo: {
+    bank: string;
+    agency: string;
+    account: string;
+    pixKey: string;
+  };
+  statements: {
+    id: string;
+    month: string; // '2026-07'
+    grossRevenue: number;
+    maintenanceExpenses: number;
+    managementFee: number;
+    netPayout: number;
+    status: 'paid' | 'pending';
+    paidAt?: string;
+  }[];
+  ownerId: string;
+}
+

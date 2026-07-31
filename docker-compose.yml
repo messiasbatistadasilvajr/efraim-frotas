@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # 1. NestJS REST API Full-Stack Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://root:efraimadmin2026@postgres:5432/efraim_fleet?schema=public
+      - JWT_SECRET=efraim-jwt-security-key-production-enterprise-256
+      - WEBHOOK_PAYMENT_URL=https://n8n.seu-servidor.com/webhook/...
+    depends_on:
+      - postgres
+    restart: always
+
+  # 2. Relational Postgres Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: efraim_postgres_db
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=efraimadmin2026
+      - POSTGRES_DB=efraim_fleet
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  # 3. Database GUI management tool (pgAdmin)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: efraim_pgadmin_gui
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=messias@efraim.com
+      - PGADMIN_DEFAULT_PASSWORD=adminpg
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    restart: always
+
+volumes:
+  postgres_data:
+    driver: local

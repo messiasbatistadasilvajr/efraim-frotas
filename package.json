@@ -11,8 +11,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@deck.gl/aggregation-layers": "^9.3.2",
+    "@deck.gl/core": "^9.3.2",
+    "@deck.gl/google-maps": "^9.3.2",
     "@google/genai": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@vis.gl/react-google-maps": "^1.8.3",
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

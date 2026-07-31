@@ -4,6 +4,7 @@ import { Plus, AlertCircle, FileText, User, Calendar, Search, Filter, CheckCircl
 import { db, auth } from '../lib/firebase';
 import { Fine, Vehicle, Driver, Contract } from '../types';
 import { formatCurrency, formatDate, cn } from '../lib/utils';
+import { getWebhookConfig, triggerWebhook } from '../lib/webhooks';
 
 export function Fines() {
   const [fines, setFines] = useState<Fine[]>([]);
@@ -41,6 +42,8 @@ export function Fines() {
     if (!auth.currentUser) return;
     
     const driverId = findDriverForFine(formData.vehicleId, formData.date);
+    const selectedVehicle = vehicles.find(v => v.id === formData.vehicleId);
+    const selectedDriver = drivers.find(d => d.id === driverId);
     
     try {
       await addDoc(collection(db, 'fines'), { 
@@ -50,6 +53,25 @@ export function Fines() {
         ownerId: auth.currentUser.uid, 
         createdAt: serverTimestamp() 
       });
+
+      // n8n Google Sheets Backup Webhook
+      const config = getWebhookConfig();
+      if (config.sheetsUrl) {
+        triggerWebhook(config.sheetsUrl, 'transaction.created', {
+          id: Math.random().toString(36).substring(2, 11),
+          date: formData.date ? formData.date.replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
+          amount: formData.amount,
+          type: 'DEBIT',
+          category: 'Multa',
+          description: `Infração de trânsito (Cód: ${formData.infractionCode || 'N/A'}): ${formData.description || 'Sem descrição'}`,
+          driverName: selectedDriver ? selectedDriver.name : 'N/A',
+          driverEmail: selectedDriver ? selectedDriver.email : 'N/A',
+          driverContact: selectedDriver ? selectedDriver.contact : 'N/A',
+          vehicleModel: selectedVehicle ? selectedVehicle.model : 'N/A',
+          vehiclePlate: selectedVehicle ? selectedVehicle.plate : 'N/A'
+        }).catch(err => console.error('Error triggering n8n sheets webhook:', err));
+      }
+
       setShowModal(false);
       setFormData({ vehicleId: '', date: new Date().toISOString().slice(0, 16), amount: 0, description: '', infractionCode: '' });
     } catch (e) { console.error(e); }

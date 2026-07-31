@@ -5,6 +5,7 @@ import { db, auth } from '../lib/firebase';
 import { Payment, Driver, Contract } from '../types';
 import { formatCurrency, formatDate, cn } from '../lib/utils';
 import { PixPaymentModal } from './PixPaymentModal';
+import { getWebhookConfig, triggerWebhook } from '../lib/webhooks';
 
 export function Finances() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -36,15 +37,42 @@ export function Finances() {
     e.preventDefault();
     if (!auth.currentUser) return;
     try {
+      const paymentData = { ...formData, ownerId: auth.currentUser.uid, createdAt: new Date().toISOString() };
       await addDoc(collection(db, 'payments'), { ...formData, ownerId: auth.currentUser.uid, createdAt: serverTimestamp() });
       
       // Update Driver Deposit Balance if type is deposit
-      if (formData.type === 'deposit') {
-        const driver = drivers.find(d => d.id === formData.driverId);
-        if (driver) {
-          const currentBalance = driver.depositBalance || 0;
-          await updateDoc(doc(db, 'drivers', driver.id), { depositBalance: currentBalance + formData.amount });
-        }
+      const selectedDriver = drivers.find(d => d.id === formData.driverId);
+      if (formData.type === 'deposit' && selectedDriver) {
+        const currentBalance = selectedDriver.depositBalance || 0;
+        await updateDoc(doc(db, 'drivers', selectedDriver.id), { depositBalance: currentBalance + formData.amount });
+      }
+
+      // n8n Webhook Trigger
+      const config = getWebhookConfig();
+      if (config.paymentUrl) {
+        triggerWebhook(config.paymentUrl, 'payment.created', {
+          ...paymentData,
+          driverName: selectedDriver ? selectedDriver.name : 'N/A',
+          driverEmail: selectedDriver ? selectedDriver.email : 'N/A',
+          driverContact: selectedDriver ? selectedDriver.contact : 'N/A'
+        }).catch(err => console.error('Error triggering n8n payment webhook:', err));
+      }
+
+      // n8n Google Sheets Backup Webhook
+      if (config.sheetsUrl) {
+        triggerWebhook(config.sheetsUrl, 'transaction.created', {
+          id: Math.random().toString(36).substring(2, 11),
+          date: formData.date ? formData.date.replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
+          amount: formData.amount,
+          type: 'CREDIT',
+          category: formData.type === 'weekly' ? 'Aluguel Semanal' :
+                    formData.type === 'deposit' ? 'Caução' :
+                    formData.type === 'earnings' ? 'Ganhos Brutos' : 'Ajustes/Outros',
+          description: `Recebimento registrado no financeiro para o condutor ${selectedDriver ? selectedDriver.name : 'N/A'}`,
+          driverName: selectedDriver ? selectedDriver.name : 'N/A',
+          driverEmail: selectedDriver ? selectedDriver.email : 'N/A',
+          driverContact: selectedDriver ? selectedDriver.contact : 'N/A'
+        }).catch(err => console.error('Error triggering n8n sheets webhook:', err));
       }
 
       setShowModal(false);

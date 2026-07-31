@@ -149,6 +149,39 @@
         "role": { "type": "string", "enum": ["admin", "staff"] }
       },
       "required": ["email", "role"]
+    },
+    "Issue": {
+      "title": "Issue",
+      "description": "A tracked issue or task, can have sub-issues.",
+      "type": "object",
+      "properties": {
+        "vehicleId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "in_progress", "resolved", "closed"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "date": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" },
+        "parentId": { "type": "string" }
+      },
+      "required": ["title", "status", "priority", "date", "ownerId"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "A lead registration from interest forms on website.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "cnhType": { "type": "string" },
+        "city": { "type": "string" },
+        "interest": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "phone", "interest"]
     }
   },
   "firestore": {
@@ -159,6 +192,8 @@
     "/fines/{fineId}": { "schema": "Fine", "description": "Traffic fines history" },
     "/payments/{paymentId}": { "schema": "Payment", "description": "Financial records" },
     "/checklists/{checklistId}": { "schema": "Checklist", "description": "Vehicle inspection reports" },
-    "/managers/{managerId}": { "schema": "Manager", "description": "Application managers" }
+    "/managers/{managerId}": { "schema": "Manager", "description": "Application managers" },
+    "/issues/{issueId}": { "schema": "Issue", "description": "Tracked issues and sub-issues" },
+    "/leads/{leadId}": { "schema": "Lead", "description": "User registration and driver lead requests" }
   }
 }

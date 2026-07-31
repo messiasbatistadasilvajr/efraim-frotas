@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Representação de Inquilinos (Multi-Tenant isolation)
+model Tenant {
+  id          String   @id @default(uuid()) @map("id")
+  name        String
+  document    String   @unique // CNPJ ou CPF do Gestor principal
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  users       User[]
+  vehicles    Vehicle[]
+  drivers     Driver[]
+  contracts   Contract[]
+
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  email     String   @unique
+  role      String   @default("manager") // manager, owner, driver
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relacionamento com Inquilino
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+model Vehicle {
+  id              String        @id @default(uuid())
+  tenantId        String        @map("tenant_id")
+  plate           String        @unique
+  model           String
+  year            Int
+  color           String
+  status          String        @default("available") // available, rented, maintenance, inactive
+  currentKm       Int           @default(0) @map("current_km")
+  purchaseValue   Decimal       @map("purchase_value") @db.Decimal(10, 2)
+  insuranceExpiry DateTime      @map("insurance_expiry")
+  licensingExpiry DateTime      @map("licensing_expiry")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  // Relacionamentos
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contracts       Contract[]
+  maintenances    Maintenance[]
+  fines           Fine[]
+
+  @@index([tenantId])
+  @@index([plate])
+  @@map("vehicles")
+}
+
+model Driver {
+  id             String     @id @default(uuid())
+  tenantId       String     @map("tenant_id")
+  name           String
+  cnh            String     @unique
+  cnhExpiry      DateTime   @map("cnh_expiry")
+  cpf            String     @unique
+  contact        String
+  email          String
+  status         String     @default("active") // active, blocked, inactive
+  depositBalance Decimal    @default(0.00) @map("deposit_balance") @db.Decimal(10, 2)
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  // Relacionamentos
+  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contracts      Contract[]
+  fines          Fine[]
+
+  @@index([tenantId])
+  @@index([cpf])
+  @@map("drivers")
+}
+
+model Contract {
+  id              String      @id @default(uuid())
+  tenantId        String      @map("tenant_id")
+  driverId        String      @map("driver_id")
+  vehicleId       String      @map("vehicle_id")
+  startDate       DateTime    @map("start_date")
+  endDate         DateTime?   @map("end_date")
+  status          String      @default("active") // active, closed, cancelled
+  pricePerWeek    Decimal     @map("price_per_week") @db.Decimal(10, 2)
+  securityDeposit Decimal     @map("security_deposit") @db.Decimal(10, 2)
+  initialKm       Int         @map("initial_km")
+  finalKm         Int?        @map("final_km")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  // Relacionamentos
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  driver          Driver      @relation(fields: [driverId], references: [id])
+  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id])
+  payments        Payment[]
+  checklists      Checklist[]
+
+  @@index([tenantId])
+  @@index([driverId])
+  @@index([vehicleId])
+  @@map("contracts")
+}
+
+model Maintenance {
+  id          String   @id @default(uuid())
+  vehicleId   String   @map("vehicle_id")
+  type        String   @default("preventive") // preventive, corrective
+  date        DateTime
+  km          Int
+  cost        Decimal  @db.Decimal(10, 2)
+  description String
+  parts       String[] @default([])
+  workshop    String?  @map("workshop_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relacionamentos
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("maintenances")
+}
+
+model Fine {
+  id             String   @id @default(uuid())
+  vehicleId      String   @map("vehicle_id")
+  driverId       String   @map("driver_id")
+  date           DateTime
+  amount         Decimal  @db.Decimal(10, 2)
+  description    String
+  status         String   @default("pending") // pending, paid, contested, reimbursed
+  infractionCode String?  @map("infraction_code")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relacionamentos
+  vehicle        Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  driver         Driver   @relation(fields: [driverId], references: [id])
+
+  @@index([vehicleId])
+  @@index([driverId])
+  @@map("fines")
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  contractId String   @map("contract_id")
+  date       DateTime
+  amount     Decimal  @db.Decimal(10, 2)
+  type       String   @default("weekly") // weekly, deposit, repair, fine, earnings
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relacionamentos
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@map("payments")
+}
+
+model Checklist {
+  id         String   @id @default(uuid())
+  contractId String   @map("contract_id")
+  type       String   @default("delivery") // delivery, return
+  date       DateTime
+  km         Int
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  // Relacionamentos
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  items      Json     // JSON contendo items e status: [{itemName: 'freio', status: 'ok', note: 'liso'}]
+
+  @@index([contractId])
+  @@map("checklists")
+}

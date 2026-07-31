@@ -7,6 +7,7 @@ import { formatCurrency, formatDate, cn } from '../lib/utils';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
+import { getWebhookConfig, triggerWebhook } from '../lib/webhooks';
 
 export function MaintenanceList() {
   const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
@@ -44,12 +45,52 @@ export function MaintenanceList() {
     e.preventDefault();
     if (!auth.currentUser) return;
     try {
+      const maintenanceData = { ...formData, ownerId: auth.currentUser.uid };
       await addDoc(collection(db, 'maintenances'), { ...formData, ownerId: auth.currentUser.uid });
       // Update vehicle KM
       const v = vehicles.find(v => v.id === formData.vehicleId);
       if (v && formData.km > v.currentKm) {
         await updateDoc(doc(db, 'vehicles', v.id), { currentKm: formData.km });
       }
+
+      // n8n Webhook Trigger
+      const config = getWebhookConfig();
+      const isFutureDate = new Date(formData.date).getTime() > new Date().setHours(0,0,0,0);
+      const suggestedCalendarTitle = `Manutênção ${formData.type === 'preventive' ? 'Preventiva' : 'Corretiva'}: ${v ? v.model : 'Veículo'} (${v ? v.plate : 'N/A'})`;
+      const managerEmail = auth.currentUser.email || 'N/A';
+      
+      const webhookPayload = {
+        ...maintenanceData,
+        vehicleModel: v ? v.model : 'N/A',
+        vehiclePlate: v ? v.plate : 'N/A',
+        vehicleColor: v ? v.color : 'N/A',
+        isFutureDate,
+        suggestedCalendarTitle,
+        managerEmail
+      };
+
+      if (config.maintenanceUrl) {
+        triggerWebhook(config.maintenanceUrl, 'maintenance.created', webhookPayload)
+          .catch(err => console.error('Error triggering n8n maintenance webhook:', err));
+      }
+
+      // n8n Google Sheets Backup Webhook
+      if (config.sheetsUrl) {
+        triggerWebhook(config.sheetsUrl, 'transaction.created', {
+          id: Math.random().toString(36).substring(2, 11),
+          date: formData.date,
+          amount: formData.cost,
+          type: 'DEBIT',
+          category: 'Manutenção',
+          description: `Gasto com manutenção (${formData.type === 'preventive' ? 'Preventiva' : 'Corretiva'}): ${v ? v.model : 'N/A'} - ${formData.description || 'Sem descrição'}`,
+          driverName: 'N/A',
+          driverEmail: 'N/A',
+          driverContact: 'N/A',
+          vehicleModel: v ? v.model : 'N/A',
+          vehiclePlate: v ? v.plate : 'N/A'
+        }).catch(err => console.error('Error triggering n8n sheets webhook:', err));
+      }
+
       setShowModal(false);
       setFormData({ vehicleId: '', type: 'preventive', date: new Date().toISOString().split('T')[0], km: 0, cost: 0, description: '', workshopName: '', parts: [] });
     } catch (e) { console.error(e); }
@@ -400,9 +441,71 @@ export function MaintenanceList() {
                       style={{ width: `${Math.max(10, Math.min(100, 100 - (v.kmRemaining / 10000 * 100)))}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-subtle">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-subtle mb-4">
                     <span>Última: {v.currentKm.toLocaleString()} KM</span>
                     <span>Meta: {v.nextKm.toLocaleString()} KM</span>
+                  </div>
+
+                  {/* Itemized Preventative Diagnostics */}
+                  <div className="border-t border-line pt-4 space-y-3">
+                    <p className="text-[10px] font-bold text-subtle uppercase tracking-widest">Sistemas de Desgaste</p>
+                    
+                    {/* Engine Oil */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[11px] font-medium">
+                        <span className="text-ink">Óleo do Motor & Filtro</span>
+                        <span className={cn(
+                          "font-bold",
+                          (10000 - (v.currentKm % 10000)) < 1500 ? "text-danger" : "text-subtle"
+                        )}>
+                          {(10000 - (v.currentKm % 10000)).toLocaleString()} KM restando
+                        </span>
+                      </div>
+                      <div className="w-full h-1 bg-bg rounded-full overflow-hidden">
+                        <div 
+                          className={cn("h-full", (10000 - (v.currentKm % 10000)) < 1500 ? "bg-danger" : "bg-emerald-500")}
+                          style={{ width: `${Math.max(0, Math.min(100, ((10000 - (v.currentKm % 10000)) / 10000) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Brake Pads */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[11px] font-medium">
+                        <span className="text-ink">Componentes de Freio</span>
+                        <span className={cn(
+                          "font-bold",
+                          (25000 - (v.currentKm % 25000)) < 2500 ? "text-danger" : "text-subtle"
+                        )}>
+                          {(25000 - (v.currentKm % 25000)).toLocaleString()} KM restando
+                        </span>
+                      </div>
+                      <div className="w-full h-1 bg-bg rounded-full overflow-hidden">
+                        <div 
+                          className={cn("h-full", (25000 - (v.currentKm % 25000)) < 2500 ? "bg-danger" : "bg-emerald-500")}
+                          style={{ width: `${Math.max(0, Math.min(100, ((25000 - (v.currentKm % 25000)) / 25000) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Spark Plugs & Fuel Filters */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[11px] font-medium">
+                        <span className="text-ink">Sistema de Ignição & Filtros</span>
+                        <span className={cn(
+                          "font-bold",
+                          (40000 - (v.currentKm % 40000)) < 4000 ? "text-danger" : "text-subtle"
+                        )}>
+                          {(40000 - (v.currentKm % 40000)).toLocaleString()} KM restando
+                        </span>
+                      </div>
+                      <div className="w-full h-1 bg-bg rounded-full overflow-hidden">
+                        <div 
+                          className={cn("h-full", (40000 - (v.currentKm % 40000)) < 4000 ? "bg-danger" : "bg-emerald-500")}
+                          style={{ width: `${Math.max(0, Math.min(100, ((40000 - (v.currentKm % 40000)) / 40000) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 

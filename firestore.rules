@@ -81,5 +81,18 @@ service cloud.firestore {
       allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
       allow update, delete: if isOwner(resource.data);
     }
+
+    // Leads
+    match /leads/{leadId} {
+      allow create: if true;
+      allow read, update, delete: if isSignedIn() && isManager();
+    }
+
+    // Issues
+    match /issues/{issueId} {
+      allow read, list: if isOwner(resource.data);
+      allow create: if isSignedIn() && (request.resource.data.ownerId == request.auth.uid || isManager());
+      allow update, delete: if isOwner(resource.data);
+    }
   }
 }

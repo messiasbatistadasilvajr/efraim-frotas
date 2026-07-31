@@ -20,7 +20,13 @@ import {
   Clock,
   LayoutDashboard,
   ClipboardCheck,
-  MapPin
+  MapPin,
+  Smartphone,
+  Download,
+  Settings,
+  ShieldCheck,
+  Kanban,
+  Building2
 } from 'lucide-react';
 import { auth, signInWithGoogle, logout, db } from './lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -39,8 +45,15 @@ import { Analytics } from './components/Analytics';
 import { CautionaryReport } from './components/CautionaryReport';
 import { VehicleDetails } from './components/VehicleDetails';
 import { LandingPage } from './components/LandingPage';
+import { Issues } from './components/Issues';
+import { N8nSettings } from './components/N8nSettings';
+import { EnterpriseDashboard } from './components/EnterpriseDashboard';
+import { ProposalsManager } from './components/ProposalsManager';
+import { OperationsKanban } from './components/OperationsKanban';
+import { InvestorPortal } from './components/InvestorPortal';
+import { ProposalNotificationToast } from './components/ProposalNotificationToast';
 
-type View = 'dashboard' | 'fleet' | 'drivers' | 'contracts' | 'finances' | 'fines' | 'checklists' | 'maintenance' | 'analytics' | 'tracking' | 'driver-portal' | 'cautionary-report' | 'vehicle-details';
+type View = 'dashboard' | 'fleet' | 'drivers' | 'contracts' | 'finances' | 'fines' | 'checklists' | 'maintenance' | 'analytics' | 'tracking' | 'driver-portal' | 'cautionary-report' | 'vehicle-details' | 'issues' | 'n8n' | 'enterprise' | 'proposals' | 'kanban-ops' | 'investor-portal';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null); 
@@ -49,6 +62,8 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [activeTabInstall, setActiveTabInstall] = useState<'android' | 'ios'>('android');
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
@@ -60,6 +75,22 @@ export default function App() {
   }, [currentView]);
 
   useEffect(() => {
+    const isDemo = localStorage.getItem('efraim_demo_session') === 'true';
+    const demoRole = localStorage.getItem('efraim_demo_role') as 'manager' | 'driver' || 'manager';
+
+    if (isDemo) {
+      setUser({
+        uid: demoRole === 'manager' ? 'demo-manager' : 'demo-driver',
+        email: demoRole === 'manager' ? 'messiasbjunior76@gmail.com' : 'motorista_demo@efraim.com',
+        displayName: demoRole === 'manager' ? 'Messias Bernardes (Gestor)' : 'Thiago Martins (Motorista)',
+        photoURL: null,
+      } as any);
+      setRole(demoRole);
+      setCurrentView(demoRole === 'manager' ? 'dashboard' : 'driver-portal');
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
       if (user) {
@@ -96,6 +127,41 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  const enterAsDemoManager = () => {
+    localStorage.setItem('efraim_demo_session', 'true');
+    localStorage.setItem('efraim_demo_role', 'manager');
+    setUser({
+      uid: 'demo-manager',
+      email: 'messiasbjunior76@gmail.com',
+      displayName: 'Messias Bernardes (Gestor)',
+      photoURL: null,
+    } as any);
+    setRole('manager');
+    setCurrentView('dashboard');
+  };
+
+  const enterAsDemoDriver = () => {
+    localStorage.setItem('efraim_demo_session', 'true');
+    localStorage.setItem('efraim_demo_role', 'driver');
+    setUser({
+      uid: 'demo-driver',
+      email: 'motorista_demo@efraim.com',
+      displayName: 'Thiago Martins (Motorista)',
+      photoURL: null,
+    } as any);
+    setRole('driver');
+    setCurrentView('driver-portal');
+  };
+
+  const handleLogout = async () => {
+    localStorage.removeItem('efraim_demo_session');
+    localStorage.removeItem('efraim_demo_role');
+    await logout();
+    setUser(null);
+    setRole('user');
+    setShowLandingPage(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-bg">
@@ -116,7 +182,13 @@ export default function App() {
   }
 
   if (!user && showLandingPage) {
-    return <LandingPage onLogin={() => setShowLandingPage(false)} />;
+    return (
+      <LandingPage 
+        onLogin={() => setShowLandingPage(false)} 
+        onDemoManager={enterAsDemoManager}
+        onDemoDriver={enterAsDemoDriver}
+      />
+    );
   }
 
   if (!user) {
@@ -189,15 +261,31 @@ export default function App() {
             </div>
 
             <div className="space-y-6">
-              <button
-                onClick={signInWithGoogle}
-                className="w-full flex items-center justify-center gap-4 bg-ink text-white py-4 px-6 rounded-xl font-bold hover:bg-slate-900 transition-all shadow-xl shadow-ink/10 group"
-              >
-                <div className="bg-white p-1 rounded-md group-hover:scale-110 transition-transform">
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
-                </div>
-                <span>Acessar meu Registro</span>
-              </button>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={signInWithGoogle}
+                  className="w-full flex items-center justify-center gap-4 bg-ink text-white py-4 px-6 rounded-xl font-bold hover:bg-slate-900 transition-all shadow-xl shadow-ink/10 group animate-in fade-in"
+                >
+                  <div className="bg-white p-1 rounded-md group-hover:scale-110 transition-transform">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="" />
+                  </div>
+                  <span>Acessar via Google</span>
+                </button>
+
+                <button
+                  onClick={enterAsDemoManager}
+                  className="w-full flex items-center justify-center gap-2 bg-accent text-white py-3.5 px-6 rounded-xl font-bold hover:bg-accent/90 transition-all hover:shadow-lg shadow-accent/20 text-sm"
+                >
+                  <span>Entrar como Gestor (Demonstração)</span>
+                </button>
+
+                <button
+                  onClick={enterAsDemoDriver}
+                  className="w-full flex items-center justify-center gap-2 bg-surface text-ink border border-line py-3 px-6 rounded-xl font-bold hover:bg-bg transition-all text-xs"
+                >
+                  <span>Entrar como Motorista (Exemplo)</span>
+                </button>
+              </div>
 
               <div className="relative py-4 flex items-center justify-center">
                 <div className="absolute inset-0 flex items-center">
@@ -238,11 +326,17 @@ export default function App() {
     { id: 'fleet', label: 'Frota', icon: Car },
     { id: 'drivers', label: 'Motoristas', icon: Users },
     { id: 'contracts', label: 'Contratos', icon: FileText },
+    { id: 'proposals', label: 'Propostas & Orçamentos', icon: FileText },
+    { id: 'kanban-ops', label: 'Kanban Operacional', icon: Kanban },
+    { id: 'investor-portal', label: 'Portal do Investidor', icon: Building2 },
     { id: 'finances', label: 'Financeiro', icon: DollarSign },
     { id: 'fines', label: 'Multas', icon: AlertCircle },
     { id: 'checklists', label: 'Checklists', icon: ClipboardCheck },
     { id: 'maintenance', label: 'Manutenção', icon: Wrench },
+    { id: 'issues', label: 'Ocorrências', icon: AlertCircle },
     { id: 'tracking', label: 'Rastreamento', icon: MapPin },
+    { id: 'n8n', label: 'Automações n8n', icon: Settings },
+    { id: 'enterprise', label: 'Painel Enterprise', icon: ShieldCheck },
     { id: 'driver-portal', label: 'Portal do Motorista', icon: Users },
   ];
 
@@ -295,15 +389,23 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="p-6 border-t border-line">
+        <div className="p-6 border-t border-line space-y-4">
+          <button
+            onClick={() => setShowInstallModal(true)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] bg-accent/10 hover:bg-accent/25 text-accent transition-all text-[13px] font-bold"
+          >
+            <Smartphone size={16} />
+            {sidebarOpen && <span>Baixar no Celular</span>}
+          </button>
+
           {sidebarOpen && (
-            <div className="mb-6">
-              <p className="text-[11px] font-bold text-subtle uppercase tracking-widest mb-2">v2.4.0 • Licença Ativa</p>
+            <div>
+              <p className="text-[11px] font-bold text-subtle uppercase tracking-widest mb-1">v2.4.0 • Licença Ativa</p>
               <p className="text-[12px] font-medium text-subtle truncate">{user?.email}</p>
             </div>
           )}
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-[6px] text-danger hover:bg-danger/5 transition-all text-[14px] font-medium"
           >
             <LogOut size={18} />
@@ -337,7 +439,10 @@ export default function App() {
           </div>
         </header>
 
-        <div className="p-10 max-w-7xl mx-auto w-full flex flex-col gap-8">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex flex-col gap-8 min-h-[calc(100vh-80px)]">
+          {/* Mercado Livre Style Sound & Voice Notification Toast */}
+          <ProposalNotificationToast onOpenProposalsView={() => setCurrentView('proposals')} />
+
           {currentView === 'dashboard' && <Dashboard onViewChange={setCurrentView} />}
           {currentView === 'analytics' && <Analytics />}
           {currentView === 'fleet' && (
@@ -346,11 +451,18 @@ export default function App() {
               setCurrentView('vehicle-details');
             }} />
           )}
-          {currentView === 'vehicle-details' && selectedVehicleId && (
-            <VehicleDetails 
-              vehicleId={selectedVehicleId} 
-              onBack={() => setCurrentView('fleet')} 
-            />
+          {currentView === 'vehicle-details' && (
+            selectedVehicleId ? (
+              <VehicleDetails 
+                vehicleId={selectedVehicleId} 
+                onBack={() => setCurrentView('fleet')} 
+              />
+            ) : (
+              <Fleet onSelectVehicle={(id) => {
+                setSelectedVehicleId(id);
+                setCurrentView('vehicle-details');
+              }} />
+            )
           )}
           {currentView === 'drivers' && (
             <Drivers 
@@ -373,6 +485,9 @@ export default function App() {
               }}
             />
           )}
+          {currentView === 'proposals' && <ProposalsManager />}
+          {currentView === 'kanban-ops' && <OperationsKanban />}
+          {currentView === 'investor-portal' && <InvestorPortal />}
           {currentView === 'finances' && <Finances />}
           {currentView === 'fines' && <Fines />}
           {currentView === 'checklists' && (
@@ -382,16 +497,137 @@ export default function App() {
             }} />
           )}
           {currentView === 'maintenance' && <MaintenanceList />}
+          {currentView === 'issues' && <Issues />}
           {currentView === 'tracking' && <Tracking />}
+          {currentView === 'n8n' && <N8nSettings />}
+          {currentView === 'enterprise' && <EnterpriseDashboard />}
           {currentView === 'driver-portal' && <DriverPortal />}
-          {currentView === 'cautionary-report' && selectedChecklistId && (
-            <CautionaryReport 
-              checklistId={selectedChecklistId} 
-              onBack={() => setCurrentView('checklists')} 
-            />
+          {currentView === 'cautionary-report' && (
+            selectedChecklistId ? (
+              <CautionaryReport 
+                checklistId={selectedChecklistId} 
+                onBack={() => setCurrentView('checklists')} 
+              />
+            ) : (
+              <Checklists onSelectReport={(id) => {
+                setSelectedChecklistId(id);
+                setCurrentView('cautionary-report');
+              }} />
+            )
           )}
         </div>
       </main>
+
+      {/* Modern PWA Install Guide Modal */}
+      {showInstallModal && (
+        <div className="fixed inset-0 bg-ink/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface w-full max-w-lg rounded-2xl border border-line overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-6 border-b border-line flex items-center justify-between bg-bg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-accent/10 rounded-xl text-accent">
+                  <Smartphone size={22} />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-lg text-ink">Efraim Frotas no Celular</h3>
+                  <p className="text-xs text-subtle">Instale sem passar pelas lojas oficiais</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowInstallModal(false)}
+                className="p-2 hover:bg-bg rounded-lg text-subtle hover:text-ink transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Inner Content */}
+            <div className="p-6 space-y-6 flex-1">
+              <p className="text-sm text-subtle leading-relaxed">
+                Este sistema foi desenvolvido como uma tecnologia <strong>Progressive Web App (PWA)</strong>. Você pode "instalá-lo" diretamente no seu celular em menos de 10 segundos, no tamanho correto de tela e sem ocupar a memória do aparelho!
+              </p>
+
+              {/* Tabs selector */}
+              <div className="flex bg-bg rounded-lg p-1 border border-line">
+                <button
+                  onClick={() => setActiveTabInstall('android')}
+                  className={cn(
+                    "flex-1 py-2 rounded-md font-bold text-xs transition-all uppercase tracking-wider",
+                    activeTabInstall === 'android' ? "bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-accent" : "text-subtle hover:text-ink"
+                  )}
+                >
+                  Android (Chrome)
+                </button>
+                <button
+                  onClick={() => setActiveTabInstall('ios')}
+                  className={cn(
+                    "flex-1 py-2 rounded-md font-bold text-xs transition-all uppercase tracking-wider",
+                    activeTabInstall === 'ios' ? "bg-surface shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-accent" : "text-subtle hover:text-ink"
+                  )}
+                >
+                  iOS / iPhone (Safari)
+                </button>
+              </div>
+
+              {/* Tab: Android */}
+              {activeTabInstall === 'android' && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+                    <p className="text-sm text-ink font-medium">Abra o site <strong>Efraim Frotas</strong> no navegador Chrome do seu celular.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+                    <p className="text-sm text-ink font-medium">Toque nos <strong>três pontinhos</strong> <span className="font-bold text-subtle bg-bg px-2 py-0.5 rounded border border-line">⋮</span> no canto superior direito.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+                    <p className="text-sm text-ink font-medium">Procure e toque em <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.</p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 mt-2">
+                    <p className="text-xs text-emerald-800 leading-relaxed font-medium">
+                      🚀 <strong>Pronto!</strong> Um ícone oficial do <strong>Efraim Frotas</strong> surgirá na tela inicial e gaveta de aplicativos do seu celular, rodando offline e em tela cheia de forma instantânea!
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: iOS */}
+              {activeTabInstall === 'ios' && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+                    <p className="text-sm text-ink font-medium">Abra o site <strong>Efraim Frotas</strong> no navegador <strong>Safari</strong> do seu iPhone.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+                    <p className="text-sm text-ink font-medium">Toque no botão de <strong>Compartilhar</strong> (ícone de um quadrado com uma flecha apontando para cima) na barra inferior.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+                    <p className="text-sm text-ink font-medium">Role o menu para baixo e toque em <strong>"Adicionar à Tela de Início"</strong>.</p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 mt-2">
+                    <p className="text-xs text-emerald-800 leading-relaxed font-medium">
+                      ✨ <strong>Pronto!</strong> O aplicativo será adicionado à sua tela inicial do iPhone, rodando em tela cheia com a melhor performance nativa da Apple!
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-muted border-t border-line flex justify-end">
+              <button
+                onClick={() => setShowInstallModal(false)}
+                className="px-5 py-2.5 bg-ink hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all shadow-md uppercase tracking-wider"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
