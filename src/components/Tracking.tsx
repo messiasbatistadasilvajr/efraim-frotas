@@ -44,15 +44,15 @@ function DeckGlOverlay({ layers }: DeckGlOverlayProps) {
   return null;
 }
 
-// Generate realistic São Paulo coordinates for each vehicle naturally distributed
+// Generate realistic Fortaleza coordinates for each vehicle naturally distributed
 const getVehicleCoords = (v: Vehicle, index: number) => {
   const hubs = [
-    { lat: -23.5614, lng: -46.6559 }, // Av Paulista
-    { lat: -23.6086, lng: -46.6971 }, // Marginal Berrini
-    { lat: -23.6273, lng: -46.6565 }, // Congonhas Airfield
-    { lat: -23.5505, lng: -46.6333 }, // Praça da Sé
-    { lat: -23.5874, lng: -46.6576 }, // Parque Ibirapuera
-    { lat: -23.5512, lng: -46.6872 }, // Vila Madalena
+    { lat: -3.7250, lng: -38.4972 }, // Av. Beira Mar / Meireles
+    { lat: -3.7345, lng: -38.5032 }, // Av. Santos Dumont / Aldeota
+    { lat: -3.7763, lng: -38.5326 }, // Aeroporto Pinto Martins
+    { lat: -3.7275, lng: -38.5275 }, // Centro / Praça do Ferreira
+    { lat: -3.7428, lng: -38.4725 }, // Shopping RioMar / Papicu
+    { lat: -3.8322, lng: -38.4990 }, // Messejana Hub
   ];
   const hub = hubs[index % hubs.length];
   // Natural separation offsets
@@ -126,13 +126,13 @@ export function Tracking() {
       }
     });
 
-    // 2. High-circulation logistics hubs within SP
+    // 2. High-circulation logistics hubs within Fortaleza (CE)
     const hubs = [
-      { lat: -23.5614, lng: -46.6559, weight: 15, count: 25 }, // Av Paulista
-      { lat: -23.6273, lng: -46.6565, weight: 18, count: 30 }, // Congonhas Airport
-      { lat: -23.6086, lng: -46.6971, weight: 12, count: 20 }, // Marginal Pinheiros
-      { lat: -23.4322, lng: -46.4692, weight: 24, count: 40 }, // Guarulhos Area
-      { lat: -23.5505, lng: -46.6333, weight: 10, count: 15 }  // Centro
+      { lat: -3.7250, lng: -38.4972, weight: 15, count: 25 }, // Av. Beira Mar / Meireles
+      { lat: -3.7763, lng: -38.5326, weight: 18, count: 30 }, // Aeroporto Pinto Martins
+      { lat: -3.7345, lng: -38.5032, weight: 12, count: 20 }, // Aldeota / Santos Dumont
+      { lat: -3.8322, lng: -38.4990, weight: 24, count: 40 }, // Messejana
+      { lat: -3.7275, lng: -38.5275, weight: 10, count: 15 }  // Centro Fortaleza
     ];
 
     hubs.forEach(h => {
@@ -227,8 +227,8 @@ export function Tracking() {
             <APIProvider apiKey={API_KEY} version="weekly">
               <div className="absolute inset-0 w-full h-full">
                 <Map
-                  defaultCenter={{ lat: -23.56, lng: -46.65 }}
-                  defaultZoom={11.5}
+                  defaultCenter={{ lat: -3.7319, lng: -38.5267 }}
+                  defaultZoom={12}
                   mapId="EFRAIM_LIVE_METRICS_MAP"
                   mapTypeControl={false}
                   streetViewControl={false}

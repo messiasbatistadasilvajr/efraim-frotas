@@ -24,6 +24,7 @@ import {
 import { useFleetData } from '../hooks/useFleetData';
 import { FleetEngine } from '../lib/fleet-engine';
 import { formatCurrency, cn } from '../lib/utils';
+import { ProactiveMaintenanceAlert } from './ProactiveMaintenanceAlert';
 
 export function Dashboard({ onViewChange }: { onViewChange?: (view: any) => void }) {
   const { vehicles, drivers, contracts, payments, maintenances, loading } = useFleetData();
@@ -242,6 +243,14 @@ export function Dashboard({ onViewChange }: { onViewChange?: (view: any) => void
           </div>
         ))}
       </div>
+
+      {/* Proactive Predictive Maintenance Alert */}
+      <ProactiveMaintenanceAlert
+        vehicles={vehicles}
+        maintenances={maintenances}
+        contracts={contracts}
+        onNavigateToMaintenance={() => onViewChange?.('maintenance')}
+      />
 
       {/* Interactive Flow Cash Chart */}
       <div className="panel p-6 space-y-4">

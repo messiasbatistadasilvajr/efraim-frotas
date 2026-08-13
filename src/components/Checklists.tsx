@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
-import { Plus, CheckSquare, Clipboard, Camera, AlertCircle, Search, Filter, Calendar, User } from 'lucide-react';
+import { Plus, CheckSquare, Clipboard, Camera, AlertCircle, Search, Filter, Calendar, User, Eye, Sparkles } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { Checklist, Contract, Vehicle, Driver } from '../types';
 import { formatCurrency, formatDate, cn } from '../lib/utils';
+import { AIVisionInspectorModal } from './AIVisionInspectorModal';
 
 interface ChecklistsProps {
   onSelectReport?: (id: string) => void;
@@ -15,6 +16,7 @@ export function Checklists({ onSelectReport }: ChecklistsProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showVisionModal, setShowVisionModal] = useState(false);
   
   const [formData, setFormData] = useState({
     contractId: '', 
@@ -70,16 +72,25 @@ export function Checklists({ onSelectReport }: ChecklistsProps) {
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
-          <h2 className="font-display text-[28px] font-bold tracking-tight mb-1">Checklists</h2>
-          <p className="text-subtle text-[14px]">Inspeções de entrega e devolução de veículos</p>
+          <h2 className="font-display text-[28px] font-bold tracking-tight mb-1">Checklists & Vistorias</h2>
+          <p className="text-subtle text-[14px]">Inspeções de entrega, devolução e análise por Visão Computacional Gemini</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
-        >
-          <Plus size={16} />
-          Nova Inspeção
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={() => setShowVisionModal(true)}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-400/30 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+          >
+            <Eye size={16} />
+            <span>Analisar Foto com Visão IA</span>
+          </button>
+          <button 
+            onClick={() => setShowModal(true)}
+            className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            <Plus size={16} />
+            Nova Inspeção
+          </button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -280,6 +291,11 @@ export function Checklists({ onSelectReport }: ChecklistsProps) {
           </div>
         </div>
       )}
+      {/* Vision Inspector Modal */}
+      <AIVisionInspectorModal
+        isOpen={showVisionModal}
+        onClose={() => setShowVisionModal(false)}
+      />
     </div>
   );
 }

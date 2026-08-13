@@ -43,13 +43,13 @@ export function EnterpriseDashboard() {
 
   // SaaS Multi-Tenant State
   const [tenants, setTenants] = useState([
-    { id: 'efraim-sp', name: 'Efraim Locadora SP', document: '48.204.103/0001-90', plan: 'gold', contact: 'messias@efraim.com', status: 'Ativo', mrr: 8500, color: '#4f46e5', vehiclesCount: 48, modules: { tracking: true, fines: true, checklists: true, finances: true } },
+    { id: 'efraim-ce', name: 'Efraim Locadora CE', document: '48.204.103/0001-90', plan: 'gold', contact: 'messias@efraim.com', status: 'Ativo', mrr: 8500, color: '#4f46e5', vehiclesCount: 48, modules: { tracking: true, fines: true, checklists: true, finances: true } },
     { id: 'sulfrotas', name: 'SulFrotas Porto Alegre', document: '12.450.880/0001-12', plan: 'silver', contact: 'contato@sulfrotas.com.br', status: 'Ativo', mrr: 3850, color: '#10b981', vehiclesCount: 12, modules: { tracking: true, fines: false, checklists: true, finances: true } },
     { id: 'veloloc', name: 'VeloLoc Campinas', document: '33.910.154/0001-44', plan: 'bronze', contact: 'financeiro@veloloc.com', status: 'Ativo', mrr: 2500, color: '#f59e0b', vehiclesCount: 6, modules: { tracking: false, fines: false, checklists: true, finances: false } },
     { id: 'loc-nordeste', name: 'Locadora Sol Nordeste', document: '88.102.304/0002-88', plan: 'bronze', contact: 'sol@locnordeste.com', status: 'Suspenso', mrr: 0, color: '#ef4444', vehiclesCount: 0, modules: { tracking: false, fines: false, checklists: false, finances: false } }
   ]);
 
-  const [selectedWhitelabelTenant, setSelectedWhitelabelTenant] = useState('efraim-sp');
+  const [selectedWhitelabelTenant, setSelectedWhitelabelTenant] = useState('efraim-ce');
   const [showNewTenantForm, setShowNewTenantForm] = useState(false);
   const [newTenantName, setNewTenantName] = useState('');
   const [newTenantDoc, setNewTenantDoc] = useState('');

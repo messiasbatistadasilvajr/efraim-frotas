@@ -197,7 +197,7 @@ export function Enterprise360Suite() {
       { id: '1', category: 'CNH Vencendo', title: 'CNH Expirada - João Silva', desc: 'CNH do motorista venceu há 2 dias. Locação suspensa.', severity: 'critical', date: 'Hoje' },
       { id: '2', category: 'Licenciamento', title: 'Licenciamento IPVA - ABC-1234', desc: 'Vencimento do CRLV em 5 dias. Guia pendente de pagamento.', severity: 'warning', date: 'Amanhã' },
       { id: '3', category: 'Seguro', title: 'Renovação Apólice Porto Seguro', desc: 'Seguro da frota Sul vence em 12 dias (15 veículos cobertos).', severity: 'warning', date: '28/07' },
-      { id: '4', category: 'Multas Pendentes', title: 'Multa Não Indicada - Detran SP', desc: 'Excesso de velocidade na Rod. Anchieta (R$ 293,47). Indicar condutor.', severity: 'critical', date: 'Hoje' },
+      { id: '4', category: 'Multas Pendentes', title: 'Multa Não Indicada - Detran CE', desc: 'Excesso de velocidade na Av. Washington Soares (R$ 293,47). Indicar condutor.', severity: 'critical', date: 'Hoje' },
       { id: '5', category: 'Inadimplência', title: 'Pagamento Atrasado - Carlos Eduardo', desc: 'Fatura de locação semanal com 4 dias de atraso (R$ 850,00).', severity: 'critical', date: 'Ontem' },
       { id: '6', category: 'Manutenção Atrasada', title: 'Troca de Óleo - XYZ-9876', desc: 'Veículo ultrapassou em 1.200 km a revisão preventiva programada.', severity: 'warning', date: 'Hoje' },
       { id: '7', category: 'Rastreador Offline', title: 'Sinal GPS Ausente - DEF-5678', desc: 'Sem comunicação com módulo de telemetria há mais de 6 horas.', severity: 'critical', date: 'Hoje' },
@@ -221,7 +221,7 @@ export function Enterprise360Suite() {
       email: 'messias@empresa.com.br',
       cnh: '98765432100',
       cnhExpiry: '2027-10-15',
-      address: 'Av. Paulista, 1000 - SP'
+      address: 'Av. Beira Mar, 1000 - Fortaleza - CE'
     };
 
     return {
@@ -443,7 +443,7 @@ export function Enterprise360Suite() {
   // -------------------------------------------------------------
   const [mfaEnabled, setMfaEnabled] = useState(true);
   const [activeSessions, setActiveSessions] = useState([
-    { id: 's1', device: 'Chrome no MacOS (São Paulo)', ip: '189.122.45.10', current: true, time: 'Sessão Atual' },
+    { id: 's1', device: 'Chrome no MacOS (Fortaleza - CE)', ip: '189.122.45.10', current: true, time: 'Sessão Atual' },
     { id: 's2', device: 'Safari no iPhone 15 Pro', ip: '177.85.12.90', current: false, time: 'Ativo há 3 horas' }
   ]);
 

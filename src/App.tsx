@@ -52,8 +52,15 @@ import { ProposalsManager } from './components/ProposalsManager';
 import { OperationsKanban } from './components/OperationsKanban';
 import { InvestorPortal } from './components/InvestorPortal';
 import { ProposalNotificationToast } from './components/ProposalNotificationToast';
+import { GeminiFleetCopilot } from './components/GeminiFleetCopilot';
+import { AIVisionInspectorModal } from './components/AIVisionInspectorModal';
+import { PredictiveScoreCard } from './components/PredictiveScoreCard';
+import { LeadQualificationModal } from './components/LeadQualificationModal';
+import { DynamicPricingModal } from './components/DynamicPricingModal';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { Bot, Sparkles, Eye, ShieldAlert, MessageSquare, TrendingUp as TrendingUpIcon } from 'lucide-react';
 
-type View = 'dashboard' | 'fleet' | 'drivers' | 'contracts' | 'finances' | 'fines' | 'checklists' | 'maintenance' | 'analytics' | 'tracking' | 'driver-portal' | 'cautionary-report' | 'vehicle-details' | 'issues' | 'n8n' | 'enterprise' | 'proposals' | 'kanban-ops' | 'investor-portal';
+type View = 'dashboard' | 'fleet' | 'drivers' | 'contracts' | 'finances' | 'fines' | 'checklists' | 'maintenance' | 'analytics' | 'tracking' | 'driver-portal' | 'cautionary-report' | 'vehicle-details' | 'issues' | 'n8n' | 'enterprise' | 'proposals' | 'kanban-ops' | 'investor-portal' | 'gemini-copilot';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null); 
@@ -67,6 +74,12 @@ export default function App() {
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+
+  // AI Features Modals
+  const [showVisionModal, setShowVisionModal] = useState(false);
+  const [showPredictiveModal, setShowPredictiveModal] = useState(false);
+  const [showLeadModal, setShowLeadModal] = useState(false);
+  const [showDynamicPricingModal, setShowDynamicPricingModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -322,6 +335,7 @@ export default function App() {
 
   const navItems = [
     { id: 'dashboard', label: 'Monitoramento', icon: LayoutDashboard },
+    { id: 'gemini-copilot', label: 'Copilot IA Gemini', icon: Bot },
     { id: 'analytics', label: 'Performance', icon: TrendingUp },
     { id: 'fleet', label: 'Frota', icon: Car },
     { id: 'drivers', label: 'Motoristas', icon: Users },
@@ -352,8 +366,12 @@ export default function App() {
   });
 
   return (
-    <div className="flex min-h-screen bg-bg text-ink font-sans">
-      {/* Sidebar */}
+    <div className="flex flex-col min-h-screen bg-bg text-ink font-sans">
+      {/* Top PWA Installation Banner */}
+      <PWAInstallBanner />
+
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar */}
       <aside 
         className={cn(
           "bg-surface border-r border-line transition-all duration-300 flex flex-col",
@@ -424,6 +442,54 @@ export default function App() {
             >
               <Menu size={20} />
             </button>
+
+            {/* AI Intelligence Shortcuts */}
+            <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-line">
+              <button
+                onClick={() => setCurrentView('gemini-copilot')}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all",
+                  currentView === 'gemini-copilot'
+                    ? "bg-amber-400 text-slate-950 shadow-md"
+                    : "bg-slate-900 text-amber-400 hover:bg-slate-800 border border-slate-700/80"
+                )}
+              >
+                <Bot size={14} />
+                <span>Copilot IA</span>
+              </button>
+
+              <button
+                onClick={() => setShowVisionModal(true)}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all hover:border-amber-400/40"
+              >
+                <Eye size={14} className="text-amber-400" />
+                <span>Visão Vistoria IA</span>
+              </button>
+
+              <button
+                onClick={() => setShowPredictiveModal(true)}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all hover:border-amber-400/40"
+              >
+                <ShieldAlert size={14} className="text-amber-400" />
+                <span>Score Preditivo</span>
+              </button>
+
+              <button
+                onClick={() => setShowLeadModal(true)}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all hover:border-amber-400/40"
+              >
+                <MessageSquare size={14} className="text-emerald-400" />
+                <span>Qualificar Lead</span>
+              </button>
+
+              <button
+                onClick={() => setShowDynamicPricingModal(true)}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all hover:border-amber-400/40"
+              >
+                <TrendingUpIcon size={14} className="text-amber-400" />
+                <span>Precificação Dinâmica</span>
+              </button>
+            </div>
           </div>
           
           <div className="flex items-center gap-6">
@@ -443,6 +509,7 @@ export default function App() {
           {/* Mercado Livre Style Sound & Voice Notification Toast */}
           <ProposalNotificationToast onOpenProposalsView={() => setCurrentView('proposals')} />
 
+          {currentView === 'gemini-copilot' && <GeminiFleetCopilot />}
           {currentView === 'dashboard' && <Dashboard onViewChange={setCurrentView} />}
           {currentView === 'analytics' && <Analytics />}
           {currentView === 'fleet' && (
@@ -517,6 +584,7 @@ export default function App() {
           )}
         </div>
       </main>
+      </div>
 
       {/* Modern PWA Install Guide Modal */}
       {showInstallModal && (
@@ -628,6 +696,27 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* AI Enterprise Modals */}
+      <AIVisionInspectorModal
+        isOpen={showVisionModal}
+        onClose={() => setShowVisionModal(false)}
+      />
+
+      <PredictiveScoreCard
+        isOpen={showPredictiveModal}
+        onClose={() => setShowPredictiveModal(false)}
+      />
+
+      <LeadQualificationModal
+        isOpen={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+      />
+
+      <DynamicPricingModal
+        isOpen={showDynamicPricingModal}
+        onClose={() => setShowDynamicPricingModal(false)}
+      />
     </div>
   );
 }

@@ -791,7 +791,7 @@ export function LandingPage({ onLogin, onDemoManager, onDemoDriver }: LandingPag
                       <label className="text-[10px] font-extrabold text-slate-300 uppercase tracking-widest">Sua Cidade / Estado</label>
                       <input 
                         type="text" 
-                        placeholder="Ex: São Paulo - SP"
+                        placeholder="Ex: Fortaleza - CE"
                         value={leadForm.city}
                         onChange={(e) => setLeadForm({ ...leadForm, city: e.target.value })}
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-accent"
@@ -930,7 +930,7 @@ export function LandingPage({ onLogin, onDemoManager, onDemoDriver }: LandingPag
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-widest text-accent">Atendimento</h4>
               <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                São Paulo - SP, Brasil<br />
+                Fortaleza - CE, Brasil<br />
                 Atendimento: comercial@efraimfrotas.com.br
               </p>
             </div>

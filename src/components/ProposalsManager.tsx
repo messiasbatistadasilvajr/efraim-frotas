@@ -737,7 +737,7 @@ export function ProposalsManager() {
                     EFRAIM FROTAS
                   </h2>
                   <p className="text-xs text-slate-500 font-medium">Gestão Profissional de Frotas & Mobilidade Urbana</p>
-                  <p className="text-[11px] text-slate-400">CNPJ: 48.912.833/0001-90 • São Paulo - SP</p>
+                  <p className="text-[11px] text-slate-400">CNPJ: 48.912.833/0001-90 • Fortaleza - CE</p>
                 </div>
                 <div className="text-right space-y-1">
                   <span className="inline-block px-3 py-1 bg-slate-100 font-mono text-xs font-extrabold rounded text-slate-800 border">
