@@ -216,10 +216,10 @@ export function ContractChecklist({ contractId, type, onClose }: Props) {
 
           <div className="p-4 bg-accent/5 rounded-[12px] border border-accent/20 flex items-start gap-4">
              <Camera className="text-accent mt-1" size={24} />
-             <div>
-               <p className="text-[13px] font-bold text-ink">Registro Fotográfico Exigido</p>
+             <div className="space-y-1">
+               <p className="text-[13px] font-bold text-ink">Registro Fotográfico & Validade Jurídica</p>
                <p className="text-[12px] text-subtle leading-relaxed">
-                 Assegure-se de capturar fotos nítidas da quilometragem, nível de combustível e qualquer avaria marcada acima para validade jurídica desta vistoria.
+                 Capture fotos nítidas do painel (KM/Combustível) e de todas as 4 faces do veículo. Este laudo é anexado ao contrato comercial e assinado por ambas as partes para comprovar o estado inicial/final e assegurar cobrança de avarias e franquia sem risco judicial.
                </p>
              </div>
           </div>

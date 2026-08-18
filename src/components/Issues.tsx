@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { collection, addDoc, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { Plus, Search, AlertCircle, Clock, CheckCircle2, MoreVertical, Trash2, Edit3, ChevronRight, CornerDownRight, Flag } from 'lucide-react';
+import { Plus, Search, AlertCircle, Clock, CheckCircle2, MoreVertical, Trash2, Edit3, ChevronRight, CornerDownRight, Flag, Scale, AlertTriangle, ShieldCheck, DollarSign } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { useFleetData } from '../hooks/useFleetData';
 import { Issue } from '../types';
 import { cn, formatDate } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { LegalProtectionGuideModal } from './LegalProtectionGuideModal';
 
 export function Issues() {
   const { issues, vehicles, drivers, loading } = useFleetData();
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showLegalGuide, setShowLegalGuide] = useState(false);
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const [parentId, setParentId] = useState<string | undefined>(undefined);
   
@@ -99,15 +101,59 @@ export function Issues() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-[24px] font-bold">Ocorrências e Tarefas</h2>
-          <p className="text-subtle text-[14px]">Gerencie problemas, manutenções e pendências da frota.</p>
+          <h2 className="text-[24px] font-bold">Ocorrências, Sinistros & Tarefas</h2>
+          <p className="text-subtle text-[14px]">Gerencie batidas, manutenções, franquias de seguro e pendências operacionais.</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setShowModal(true); }}
-          className="btn btn-primary flex items-center gap-2 self-start"
-        >
-          <Plus size={20} /> Nova Ocorrência
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={() => setShowLegalGuide(true)}
+            className="btn btn-secondary flex items-center gap-2 text-xs font-bold py-2.5 px-4 rounded-xl border border-line"
+            title="Manual Legal de Repasse de Sinistros e Batidas"
+          >
+            <Scale size={16} className="text-accent" /> Regras de Sinistro & Batidas
+          </button>
+          <button 
+            onClick={() => { resetForm(); setShowModal(true); }}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            <Plus size={20} /> Nova Ocorrência
+          </button>
+        </div>
+      </div>
+
+      {/* Sinistros Protocol Legal Banner */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-surface p-4 rounded-xl border border-line text-xs">
+        <div className="flex items-start gap-2.5 p-1.5">
+          <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-ink block">Franquia Integral</span>
+            <span className="text-subtle text-[11px]">Motorista paga 100% da franquia se for o causador do sinistro.</span>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2.5 p-1.5 border-t md:border-t-0 md:border-l border-line">
+          <DollarSign size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-ink block">Abaixo da Franquia</span>
+            <span className="text-subtle text-[11px]">Reparo menor que a franquia é pago integralmente pelo condutor.</span>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2.5 p-1.5 border-t md:border-t-0 md:border-l border-line">
+          <ShieldCheck size={16} className="text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-ink block">2 a 3 Orçamentos</span>
+            <span className="text-subtle text-[11px]">Comprovação transparente de valores de peças e mão de obra.</span>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2.5 p-1.5 border-t md:border-t-0 md:border-l border-line">
+          <Clock size={16} className="text-indigo-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-ink block">Lucros Cessantes</span>
+            <span className="text-subtle text-[11px]">Diárias devidas pelos dias em que o carro fica parado na oficina.</span>
+          </div>
+        </div>
       </div>
 
       <div className="relative">
@@ -245,6 +291,13 @@ export function Issues() {
           </motion.div>
         </div>
       )}
+
+      {/* Legal Protection Guide Modal for Sinistros */}
+      <LegalProtectionGuideModal
+        isOpen={showLegalGuide}
+        initialTab="sinistros"
+        onClose={() => setShowLegalGuide(false)}
+      />
     </div>
   );
 }

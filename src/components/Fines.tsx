@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { Plus, AlertCircle, FileText, User, Calendar, Search, Filter, CheckCircle, Clock } from 'lucide-react';
+import { Plus, AlertCircle, FileText, User, Calendar, Search, Filter, CheckCircle, Clock, Scale, ShieldCheck, DollarSign, Info } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { Fine, Vehicle, Driver, Contract } from '../types';
 import { formatCurrency, formatDate, cn } from '../lib/utils';
 import { getWebhookConfig, triggerWebhook } from '../lib/webhooks';
+import { LegalProtectionGuideModal } from './LegalProtectionGuideModal';
 
 export function Fines() {
   const [fines, setFines] = useState<Fine[]>([]);
@@ -12,6 +13,7 @@ export function Fines() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showLegalGuide, setShowLegalGuide] = useState(false);
   
   const [formData, setFormData] = useState({
     vehicleId: '', date: new Date().toISOString().slice(0, 16), amount: 0, description: '', infractionCode: ''
@@ -90,17 +92,75 @@ export function Fines() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
-          <h2 className="font-display text-[28px] font-bold tracking-tight mb-1">Gestão de Multas</h2>
-          <p className="text-subtle text-[14px]">Vínculo automático de infrações e condutores</p>
+          <h2 className="font-display text-[28px] font-bold tracking-tight mb-1">Gestão de Multas & Trâmites Detran</h2>
+          <p className="text-subtle text-[14px]">Vínculo automático de infrações, indicação de condutor e desconto legal de caução</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
-        >
-          <Plus size={16} />
-          Registrar Multa
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={() => setShowLegalGuide(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold bg-surface hover:bg-bg text-ink border border-line rounded-xl transition-all"
+            title="Manual Legal de Repasse de Multas e Caução"
+          >
+            <Scale size={16} className="text-accent" />
+            <span>Regras Legais Detran</span>
+          </button>
+          <button 
+            onClick={() => setShowModal(true)}
+            className="btn-primary flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold"
+          >
+            <Plus size={16} />
+            Registrar Multa
+          </button>
+        </div>
       </header>
+
+      {/* Detran Protocol Legal Banner */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface p-4 rounded-xl border border-line">
+        <div className="flex items-start gap-3 p-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 font-bold text-xs">
+            1
+          </div>
+          <div className="text-xs">
+            <h4 className="font-bold text-ink flex items-center gap-1">
+              <ShieldCheck size={14} className="text-blue-600" />
+              Indicação no Detran
+            </h4>
+            <p className="text-subtle mt-0.5 leading-relaxed">
+              Transfira a pontuação para a CNH do motorista antes do prazo limite da Notificação de Autuação.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 p-2 border-t md:border-t-0 md:border-l border-line">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 font-bold text-xs">
+            2
+          </div>
+          <div className="text-xs">
+            <h4 className="font-bold text-ink flex items-center gap-1">
+              <DollarSign size={14} className="text-emerald-600" />
+              Desconto na Caução/Cartão
+            </h4>
+            <p className="text-subtle mt-0.5 leading-relaxed">
+              Debite o valor financeiro da caução retida ou processe cobrança direta no cartão do condutor.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 p-2 border-t md:border-t-0 md:border-l border-line">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0 font-bold text-xs">
+            3
+          </div>
+          <div className="text-xs">
+            <h4 className="font-bold text-ink flex items-center gap-1">
+              <Scale size={14} className="text-indigo-600" />
+              Reembolso Pós-Contrato
+            </h4>
+            <p className="text-subtle mt-0.5 leading-relaxed">
+              O contrato assegura o direito de cobrança mesmo para multas notificadas meses após o fim da locação.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="panel overflow-hidden">
         <div className="p-4 border-b border-line flex items-center justify-between bg-bg/30">
@@ -237,6 +297,13 @@ export function Fines() {
           </div>
         </div>
       )}
+
+      {/* Legal Protection Guide Modal for Fines */}
+      <LegalProtectionGuideModal
+        isOpen={showLegalGuide}
+        initialTab="fines"
+        onClose={() => setShowLegalGuide(false)}
+      />
     </div>
   );
 }

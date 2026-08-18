@@ -21,13 +21,15 @@ import {
   ChevronRight,
   Eye,
   Bell,
-  Volume2
+  Volume2,
+  Scale
 } from 'lucide-react';
 import { CommercialProposal } from '../types';
 import { formatCurrency, cn } from '../lib/utils';
 import { collection, getDocs, addDoc, updateDoc, doc, query, where } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { triggerNewProposalAlert, simulateIncomingProposal } from '../lib/proposalNotificationService';
+import { LegalProtectionGuideModal } from './LegalProtectionGuideModal';
 
 export function ProposalsManager() {
   const [proposals, setProposals] = useState<CommercialProposal[]>([]);
@@ -38,6 +40,7 @@ export function ProposalsManager() {
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [viewingProposal, setViewingProposal] = useState<CommercialProposal | null>(null);
+  const [showLegalGuide, setShowLegalGuide] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -324,6 +327,15 @@ export function ProposalsManager() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            onClick={() => setShowLegalGuide(true)}
+            className="flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold bg-surface hover:bg-bg text-ink border border-line rounded-xl shadow-xs transition-all"
+            title="Guia Jurídico completo sobre repasse de batidas, sinistros, franquia, lucros cessantes e multas"
+          >
+            <Scale size={16} className="text-accent" />
+            <span>Guia Jurídico & Caução</span>
+          </button>
+
           <button
             onClick={() => simulateIncomingProposal()}
             className="flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl shadow-md transition-all uppercase tracking-wider"
@@ -797,6 +809,28 @@ export function ProposalsManager() {
                 </ul>
               </div>
 
+              {/* Legal Protection & Liability Terms */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
+                <div className="flex items-center gap-2 font-bold text-slate-900 text-xs border-b border-slate-200 pb-2">
+                  <Scale size={15} className="text-emerald-700" />
+                  <span>Cláusulas de Proteção Patrimonial, Sinistros & Infrações de Trânsito:</span>
+                </div>
+                <div className="space-y-2 text-[11px] text-slate-600 leading-relaxed">
+                  <p>
+                    <strong>1. Responsabilidade Exclusiva por Danos:</strong> O locatário é o único e exclusivo responsável civil e criminalmente por quaisquer danos materiais, avarias ou colisões ocorridas durante a posse do veículo.
+                  </p>
+                  <p>
+                    <strong>2. Franquia e Prejuízos de Sinistro:</strong> Em caso de colisão ou sinistro com culpa do locatário, este arcará com o valor integral da franquia do seguro ({formatCurrency(3500)}). Caso os danos fiquem abaixo do valor da franquia, o locatário ressarcirá 100% dos custos comprovados mediante 2 a 3 orçamentos de oficinas idôneas.
+                  </p>
+                  <p>
+                    <strong>3. Lucros Cessantes:</strong> Durante o período em que o veículo permanecer retido em oficina para reparos decorrentes de sinistro causado pelo locatário, serão devidas normalmente as diárias integrais de locação.
+                  </p>
+                  <p>
+                    <strong>4. Multas de Trânsito e Pontuação:</strong> Fica autorizada a imediata Indicação de Condutor Infrator junto ao Detran/órgão autuador e o desconto dos valores financeiros da caução, cartão de garantia ou cobrança retroativa a qualquer momento.
+                  </p>
+                </div>
+              </div>
+
               {/* Digital Signature Audit Trail Box */}
               <div className="p-4 rounded-xl bg-slate-100 border border-slate-300 text-xs space-y-2">
                 <div className="flex justify-between items-center font-bold text-slate-800">
@@ -817,6 +851,12 @@ export function ProposalsManager() {
           </div>
         </div>
       )}
+
+      {/* Legal Protection Guide Modal */}
+      <LegalProtectionGuideModal
+        isOpen={showLegalGuide}
+        onClose={() => setShowLegalGuide(false)}
+      />
     </div>
   );
 }
